@@ -1,6 +1,6 @@
 """
-MicBoost - Otimizador de Latência de Microfone para Windows
-Interface gráfica principal com customtkinter.
+MicBoost - Microphone Latency Optimizer for Windows
+Main GUI application using customtkinter.
 """
 
 import customtkinter as ctk
@@ -13,8 +13,7 @@ from typing import Optional
 from audio_engine import AudioEngine, AudioDeviceInfo
 from system_optimizer import SystemOptimizer
 
-
-# ─── Tema e Cores ─────────────────────────────────────────
+# Theme and Colors
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 

@@ -1,6 +1,6 @@
 """
 MicBoost - System Optimizer
-Aplica otimizações do Windows para reduzir latência de áudio.
+Applies Windows optimizations to reduce audio processing latency.
 """
 
 import ctypes
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 @dataclass
 class OptimizationResult:
-    """Resultado de uma otimização aplicada."""
+    """Result of an applied optimization."""
     name: str
     success: bool
     message: str
@@ -22,13 +22,12 @@ class OptimizationResult:
 
 class SystemOptimizer:
     """
-    Otimizador de sistema para áudio de baixa latência no Windows.
+    System optimizer for low-latency audio on Windows.
     
-    Aplica diversas otimizações:
-    - Prioridade de processo Real-Time
-    - Verificação de plano de energia
-    - Desativação de audio enhancements
-    - Verificação de configurações de áudio
+    Applies several optimizations:
+    - Real-Time process priority
+    - High-Performance power plan check
+    - Disable Windows audio enhancements
     """
 
     # Constantes de prioridade do Windows
