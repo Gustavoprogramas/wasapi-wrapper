@@ -53,18 +53,18 @@ class AudioEngine:
             
         self.dll = ctypes.CDLL(dll_path)
         
-        self.dll.InitEngine.restype = ctypes.c_bool
-        self.dll.GetDeviceListJson.restype = ctypes.c_char_p
-        self.dll.StartStream.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_bool]
-        self.dll.StartStream.restype = ctypes.c_bool
-        self.dll.StopStream.restype = None
-        self.dll.IsStreamRunning.restype = ctypes.c_bool
-        self.dll.GetStats.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int)]
-        self.dll.GetStats.restype = None
-        self.dll.SetVolume.argtypes = [ctypes.c_float]
-        self.dll.SetVolume.restype = None
+        self.dll.MB_InitializeAudioBackend.restype = ctypes.c_bool
+        self.dll.MB_EnumerateDevicesAsJson.restype = ctypes.c_char_p
+        self.dll.MB_LaunchWasapiStream.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_bool]
+        self.dll.MB_LaunchWasapiStream.restype = ctypes.c_bool
+        self.dll.MB_HaltStream.restype = None
+        self.dll.MB_IsStreamActive.restype = ctypes.c_bool
+        self.dll.MB_FetchLatencyMetrics.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_int)]
+        self.dll.MB_FetchLatencyMetrics.restype = None
+        self.dll.MB_AdjustGain.argtypes = [ctypes.c_float]
+        self.dll.MB_AdjustGain.restype = None
 
-        self.dll.InitEngine()
+        self.dll.MB_InitializeAudioBackend()
 
     def set_status_callback(self, callback: Callable):
         self._on_status_callback = callback
@@ -74,7 +74,7 @@ class AudioEngine:
             self._on_status_callback(status, message)
 
     def _get_devices_json(self) -> dict:
-        json_str = self.dll.GetDeviceListJson().decode('utf-8')
+        json_str = self.dll.MB_EnumerateDevicesAsJson().decode('utf-8')
         try:
             return json.loads(json_str)
         except Exception:
@@ -111,7 +111,7 @@ class AudioEngine:
         
         self._notify("info", f"Starting engine | IN: {input_device}, OUT: {output_device}")
         
-        success = self.dll.StartStream(
+        success = self.dll.MB_LaunchWasapiStream(
             int(input_device), 
             int(output_device), 
             int(sample_rate), 
@@ -122,7 +122,7 @@ class AudioEngine:
         if not success:
             if exclusive:
                 self._notify("info", "Exclusive mode failed. Falling back to shared mode.")
-                success = self.dll.StartStream(
+                success = self.dll.MB_LaunchWasapiStream(
                     int(input_device), 
                     int(output_device), 
                     int(sample_rate), 
@@ -145,24 +145,24 @@ class AudioEngine:
 
     def stop(self):
         if self.is_running:
-            self.dll.StopStream()
+            self.dll.MB_HaltStream()
             self.is_running = False
             self._notify("stopped", "Stream stopped.")
 
     def set_volume(self, volume: float):
         self._volume = max(0.0, min(2.0, volume))
         if self._monitoring:
-            self.dll.SetVolume(ctypes.c_float(self._volume))
+            self.dll.MB_AdjustGain(ctypes.c_float(self._volume))
 
     def set_monitoring(self, enabled: bool):
         self._monitoring = enabled
-        self.dll.SetVolume(ctypes.c_float(self._volume if enabled else 0.0))
+        self.dll.MB_AdjustGain(ctypes.c_float(self._volume if enabled else 0.0))
 
     def get_latency_stats(self) -> LatencyStats:
         if self.is_running:
             lat = ctypes.c_float(0.0)
             underruns = ctypes.c_int(0)
-            self.dll.GetStats(ctypes.byref(lat), ctypes.byref(underruns))
+            self.dll.MB_FetchLatencyMetrics(ctypes.byref(lat), ctypes.byref(underruns))
             
             self.latency_stats.total_latency_ms = lat.value
             self.latency_stats.input_latency_ms = lat.value / 2.0
@@ -177,7 +177,7 @@ class AudioEngine:
             
         lat = ctypes.c_float(0.0)
         underruns = ctypes.c_int(0)
-        self.dll.GetStats(ctypes.byref(lat), ctypes.byref(underruns))
+        self.dll.MB_FetchLatencyMetrics(ctypes.byref(lat), ctypes.byref(underruns))
         
         return {
             'active': True,
